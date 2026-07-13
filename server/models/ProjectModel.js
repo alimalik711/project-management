@@ -1,10 +1,12 @@
 const pool = require('../config/db');
 
+
+
+
 const client = await pool.connect();
 
-
-const client = await pool.connect();
-
+const createProject = async (req,res)=>
+{
 try {
     await client.query("BEGIN");
 
@@ -49,3 +51,98 @@ try {
 } finally {
     client.release();
 }
+
+}
+
+
+
+const getMyProjects = async (userId) => {
+    const result = await pool.query(
+        `SELECT p.*
+         FROM projects p
+         JOIN project_members pm
+         ON p.id = pm.project_id
+         WHERE pm.user_id = $1
+         ORDER BY p.created_at DESC`,
+        [userId]
+    );
+
+    return result.rows;
+};
+
+
+
+const getProjectById = async (projectId, userId) => {
+    try {
+        const result = await pool.query(
+            `SELECT p.*
+             FROM projects p
+             JOIN project_members pm
+             ON p.id = pm.project_id
+             WHERE p.id = $1
+             AND pm.user_id = $2`,
+            [projectId, userId]
+        );
+
+        return result.rows[0];
+    } catch (error) {
+        throw error;
+    }
+};
+
+const updateProject = async (
+    projectId,
+    userId,
+    name,
+    description,
+    deadline,
+    status
+) => {
+    try {
+        const result = await pool.query(
+            `UPDATE projects
+             SET name = $1,
+                 description = $2,
+                 deadline = $3,
+                 status = $4,
+                 updated_at = NOW()
+             WHERE id = $5
+             AND owner_id = $6
+             RETURNING *`,
+            [name, description, deadline, status, projectId, userId]
+        );
+
+        return result.rows[0];
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+const archiveProject = async (projectId, userId) => {
+    try {
+        const result = await pool.query(
+            `UPDATE projects
+             SET status = 'ARCHIVED',
+                 updated_at = NOW()
+             WHERE id = $1
+             AND owner_id = $2
+             RETURNING *`,
+            [projectId, userId]
+        );
+
+        return result.rows[0];
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+
+
+
+
+
+module.exports = {
+    createProject, getMyProjects,getProjectById,updateProject,archiveProject
+};
