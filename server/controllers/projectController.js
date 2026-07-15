@@ -176,8 +176,98 @@ const archiveProject = async (req, res) => {
 
 
 
+
+const addMember = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { email } = req.body;
+        const ownerId = req.user.id;
+
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required",
+            });
+        }
+
+        const member = await projectModel.addMember(
+            projectId,
+            ownerId,
+            email
+        );
+
+        if (!member) {
+            return res.status(400).json({
+                message: "Unable to add member",
+            });
+        }
+
+        return res.status(201).json({
+            message: "Member added successfully",
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error",
+        });
+    }
+};
+
+
+
+const getProjectMembers = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const userId = req.user.id;
+
+        const members = await projectModel.getProjectMembers(projectId, userId);
+
+        return res.status(200).json({
+            members
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+    }
+};
+
+
+const removeMember = async (req, res) => {
+    try {
+        const { projectId, userId } = req.params;
+        const ownerId = req.user.id;
+
+        await projectModel.removeMember(projectId, ownerId, userId);
+
+        return res.status(200).json({
+            message: "Member removed successfully",
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error",
+        });
+    }
+};
+
+
+
+
+
+
+
+
+
+
 module.exports
 =
 {
-    createProject,getMyProjects,getProjectById,updateProject,deleteProject,archiveProject
+    createProject,getMyProjects,getProjectById,updateProject,deleteProject,
+    archiveProject,addMember,getProjectMembers,removeMember
 }

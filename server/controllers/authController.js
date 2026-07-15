@@ -166,4 +166,4 @@ const Login = async (req,res)=>{
 
 
 
-module.exports= {SignUp,Login,getProfile}
+module.exports= {SignUp,Login}
