@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const  protect  = require("../middleware/authMiddleware");
-const {createTask,getProjectTasks,getTaskById,updateTask} = require("../controllers/taskController");
+const {createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask} = require("../controllers/taskController");
 
 // Create Task
 router.post(
@@ -29,6 +29,18 @@ router.patch(
 );
 
 
+router.delete(
+    "/:taskId",
+    protect,
+    deleteTask
+);
+
+
+router.post(
+    "/:taskId/assign",
+    protect,
+    assignTask
+);
 
 
 

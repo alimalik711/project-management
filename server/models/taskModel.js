@@ -323,6 +323,240 @@ const updateTask = async (taskId, userId, data) => {
 
 };
 
+
+const deleteTask = async (taskId, userId) => {
+
+    const client = await pool.connect();
+
+    try {
+
+        await client.query("BEGIN");
+
+        // Check task exists
+        const taskResult = await client.query(
+            `SELECT *
+             FROM tasks
+             WHERE id = $1`,
+            [taskId]
+        );
+
+        const task = taskResult.rows[0];
+
+        if (!task) {
+            throw new Error("Task not found");
+        }
+
+        // Check user is a project member
+        const memberResult = await client.query(
+            `SELECT *
+             FROM project_members
+             WHERE project_id = $1
+             AND user_id = $2`,
+            [task.project_id, userId]
+        );
+
+        const member = memberResult.rows[0];
+
+        if (!member) {
+            throw new Error("Access denied");
+        }
+
+        // Delete task
+        await client.query(
+            `DELETE FROM tasks
+             WHERE id = $1`,
+            [taskId]
+        );
+
+        // Create activity log
+        await client.query(
+            `INSERT INTO activity_logs
+            (
+                user_id,
+                action,
+                description,
+                project_id,
+                task_id
+            )
+            VALUES ($1, $2, $3, $4, $5)`,
+            [
+                userId,
+                "TASK_UPDATED",
+                `Task "${task.title}" was deleted`,
+                task.project_id,
+                task.id
+            ]
+        );
+
+        await client.query("COMMIT");
+
+    } catch (error) {
+
+        await client.query("ROLLBACK");
+        throw error;
+
+    } finally {
+
+        client.release();
+
+    }
+
+};
+
+
+
+
+const assignTask = async (taskId, requesterId, assigneeId) => {
+
+    const client = await pool.connect();
+
+    try {
+
+        await client.query("BEGIN");
+
+        // Check task exists
+        const taskResult = await client.query(
+            `SELECT *
+             FROM tasks
+             WHERE id = $1`,
+            [taskId]
+        );
+
+        const task = taskResult.rows[0];
+
+        if (!task) {
+            throw new Error("Task not found");
+        }
+
+        // Check requester is project member
+        const memberResult = await client.query(
+            `SELECT *
+             FROM project_members
+             WHERE project_id = $1
+             AND user_id = $2`,
+            [task.project_id, requesterId]
+        );
+
+        const member = memberResult.rows[0];
+
+        if (!member) {
+            throw new Error("Access denied");
+        }
+
+        // Check assignee exists
+        const userResult = await client.query(
+            `SELECT *
+             FROM users
+             WHERE id = $1`,
+            [assigneeId]
+        );
+
+        const user = userResult.rows[0];
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        // Check assignee is project member
+        const assigneeMemberResult = await client.query(
+            `SELECT *
+             FROM project_members
+             WHERE project_id = $1
+             AND user_id = $2`,
+            [task.project_id, assigneeId]
+        );
+
+        const assigneeMember = assigneeMemberResult.rows[0];
+
+        if (!assigneeMember) {
+            throw new Error("User is not a member of this project");
+        }
+
+        // Check already assigned
+        const assignedResult = await client.query(
+            `SELECT *
+             FROM task_assignees
+             WHERE task_id = $1
+             AND user_id = $2`,
+            [taskId, assigneeId]
+        );
+
+        const assigned = assignedResult.rows[0];
+
+        if (assigned) {
+            throw new Error("User is already assigned to this task");
+        }
+
+        // Assign task
+        await client.query(
+            `INSERT INTO task_assignees
+            (
+                task_id,
+                user_id
+            )
+            VALUES ($1, $2)`,
+            [
+                taskId,
+                assigneeId
+            ]
+        );
+
+        // Create notification
+        await client.query(
+            `INSERT INTO notifications
+            (
+                user_id,
+                type,
+                message,
+                task_id,
+                project_id
+            )
+            VALUES ($1, $2, $3, $4, $5)`,
+            [
+                assigneeId,
+                "TASK_ASSIGNED",
+                `You have been assigned to task "${task.title}"`,
+                task.id,
+                task.project_id
+            ]
+        );
+
+        // Create activity log
+        await client.query(
+            `INSERT INTO activity_logs
+            (
+                user_id,
+                action,
+                description,
+                project_id,
+                task_id
+            )
+            VALUES ($1, $2, $3, $4, $5)`,
+            [
+                requesterId,
+                "TASK_ASSIGNED",
+                `Assigned "${user.name}" to task "${task.title}"`,
+                task.project_id,
+                task.id
+            ]
+        );
+
+        await client.query("COMMIT");
+
+    } catch (error) {
+
+        await client.query("ROLLBACK");
+        throw error;
+
+    } finally {
+
+        client.release();
+
+    }
+
+};
+
+
 module.exports = {
-    createTask
+    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,
 };

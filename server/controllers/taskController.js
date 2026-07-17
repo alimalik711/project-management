@@ -1,6 +1,6 @@
 
 
-
+const taskModel = require('../models/taskModel');
 
 const createTask = async (req, res) => {
     try {
@@ -138,9 +138,71 @@ const updateTask = async (req, res) => {
 
 
 
+const deleteTask = async (req, res) => {
+
+    try {
+
+        const { taskId } = req.params;
+        const userId = req.user.userid; // or req.user.id
+
+        await taskModel.deleteTask(taskId, userId);
+
+        return res.status(200).json({
+            message: "Task deleted successfully"
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+
+};
+
+
+const assignTask = async (req, res) => {
+
+    try {
+
+        const { taskId } = req.params;
+        const { userId } = req.body;
+
+        const requesterId = req.user.userid; // or req.user.id
+
+        await taskModel.assignTask(
+            taskId,
+            requesterId,
+            userId
+        );
+
+        return res.status(200).json({
+            message: "Task assigned successfully"
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+
+};
+
+
+
+
+
+
 
 
 module.exports
 ={
-    createTask,getProjectTasks,getTaskById,updateTask
+    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask
 }

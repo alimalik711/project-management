@@ -10,4 +10,5 @@ router.post('/signup', SignUp);
 router.post('/login', Login);   
 router.get('/profile', getProfile);
 
+
 module.exports = router;
