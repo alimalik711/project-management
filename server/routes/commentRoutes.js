@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { protect } = require("../middleware/authMiddleware");
+const  protect  = require("../middleware/authMiddleware");
 const commentController = require("../controllers/commentController");
 
 router.post(

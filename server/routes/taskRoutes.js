@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const  protect  = require("../middleware/authMiddleware");
-const {createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask} = require("../controllers/taskController");
+const {createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus} = require("../controllers/taskController");
 
 // Create Task
 router.post(
@@ -43,7 +43,11 @@ router.post(
 );
 
 
-
+router.patch(
+    "/:taskId/status",
+    protect,
+    changeTaskStatus
+);
 
 
 

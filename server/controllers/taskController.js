@@ -195,6 +195,41 @@ const assignTask = async (req, res) => {
 
 };
 
+const changeTaskStatus = async (req, res) => {
+
+    try {
+
+        const { taskId } = req.params;
+
+        const { status } = req.body;
+
+        const userId = req.user.userid;
+
+        const updatedTask = await taskModel.changeTaskStatus(
+            taskId,
+            userId,
+            status
+        );
+
+        return res.status(200).json({
+            message: "Task status updated successfully",
+            task: updatedTask
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+
+};
+
+
+
 
 
 
@@ -204,5 +239,5 @@ const assignTask = async (req, res) => {
 
 module.exports
 ={
-    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask
+    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus
 }
