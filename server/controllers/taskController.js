@@ -47,14 +47,20 @@ const createTask = async (req, res) => {
 
 
 const getProjectTasks = async (req, res) => {
+
     try {
 
         const { projectId } = req.params;
-        const userId = req.user.id;   // or req.user.id, depending on your JWT payload
+
+        const { page = 1, limit = 10 } = req.query;
+
+        const userId = req.user.id;
 
         const tasks = await taskModel.getProjectTasks(
             projectId,
-            userId
+            userId,
+            Number(page),
+            Number(limit)
         );
 
         return res.status(200).json({
@@ -70,8 +76,8 @@ const getProjectTasks = async (req, res) => {
         });
 
     }
-};
 
+};
 
 
 
@@ -110,7 +116,7 @@ const updateTask = async (req, res) => {
     try {
 
         const { taskId } = req.params;
-        const userId = req.user.userid; // or req.user.id
+        const userId = req.user.id; // or req.user.id
 
         const updatedTask = await taskModel.updateTask(
             taskId,
@@ -143,7 +149,7 @@ const deleteTask = async (req, res) => {
     try {
 
         const { taskId } = req.params;
-        const userId = req.user.userid; // or req.user.id
+        const userId = req.user.id; // or req.user.id
 
         await taskModel.deleteTask(taskId, userId);
 
@@ -171,7 +177,7 @@ const assignTask = async (req, res) => {
         const { taskId } = req.params;
         const { userId } = req.body;
 
-        const requesterId = req.user.userid; // or req.user.id
+        const requesterId = req.user.id; // or req.user.id
 
         await taskModel.assignTask(
             taskId,
@@ -203,7 +209,7 @@ const changeTaskStatus = async (req, res) => {
 
         const { status } = req.body;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const updatedTask = await taskModel.changeTaskStatus(
             taskId,
@@ -230,6 +236,109 @@ const changeTaskStatus = async (req, res) => {
 
 
 
+const searchTasks = async (req, res) => {
+
+    try {
+
+        const { projectId } = req.params;
+
+        const { query } = req.query;
+
+        const userId = req.user.id;
+
+        const tasks = await taskModel.searchTasks(
+            projectId,
+            userId,
+            query
+        );
+
+        return res.status(200).json({
+            tasks
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+
+};
+
+
+
+
+const filterTasks = async (req, res) => {
+
+    try {
+
+        const { projectId } = req.params;
+
+        const { status, priority } = req.query;
+
+        const userId = req.user.id;
+
+        const tasks = await taskModel.filterTasks(
+            projectId,
+            userId,
+            status,
+            priority
+        );
+
+        return res.status(200).json({
+            tasks
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+
+};
+
+
+
+const sortTasks = async (req, res) => {
+
+    try {
+
+        const { projectId } = req.params;
+
+        const { sortBy, order } = req.query;
+
+        const userId = req.user.id;
+
+        const tasks = await taskModel.sortTasks(
+            projectId,
+            userId,
+            sortBy,
+            order
+        );
+
+        return res.status(200).json({
+            tasks
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+
+};
+
 
 
 
@@ -239,5 +348,5 @@ const changeTaskStatus = async (req, res) => {
 
 module.exports
 ={
-    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus
+    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus,searchTasks,filterTasks
 }

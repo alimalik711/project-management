@@ -25,5 +25,12 @@ router.delete(
     fileController.deleteFile
 );
 
+router.get(
+    "/project/:projectId/search",
+    protect,
+    taskController.searchTasks
+);
+
+
 
 module.exports = router;

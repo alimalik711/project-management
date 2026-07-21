@@ -109,55 +109,63 @@ const createTask = async (
 
 
 
-const getProjectTasks = async (projectId, userId) => {
+const getProjectTasks = async (
+    projectId,
+    userId,
+    page,
+    limit
+) => {
 
-    try {
+    const offset = (page - 1) * limit;
 
-        // Check project exists
-        const projectResult = await pool.query(
-            `SELECT *
-             FROM projects
-             WHERE id = $1`,
-            [projectId]
-        );
+    // Check project exists
+    const projectResult = await pool.query(
+        `SELECT *
+         FROM projects
+         WHERE id = $1`,
+        [projectId]
+    );
 
-        const project = projectResult.rows[0];
+    const project = projectResult.rows[0];
 
-        if (!project) {
-            throw new Error("Project not found");
-        }
-
-        // Check user is a project member
-        const memberResult = await pool.query(
-            `SELECT *
-             FROM project_members
-             WHERE project_id = $1
-             AND user_id = $2`,
-            [projectId, userId]
-        );
-
-        const member = memberResult.rows[0];
-
-        if (!member) {
-            throw new Error("Access denied");
-        }
-
-        // Get all tasks
-        const taskResult = await pool.query(
-            `SELECT *
-             FROM tasks
-             WHERE project_id = $1
-             ORDER BY created_at DESC`,
-            [projectId]
-        );
-
-        return taskResult.rows;
-
-    } catch (error) {
-
-        throw error;
-
+    if (!project) {
+        throw new Error("Project not found");
     }
+
+    // Check project membership
+    const memberResult = await pool.query(
+        `SELECT *
+         FROM project_members
+         WHERE project_id = $1
+         AND user_id = $2`,
+        [
+            projectId,
+            userId
+        ]
+    );
+
+    const member = memberResult.rows[0];
+
+    if (!member) {
+        throw new Error("Access denied");
+    }
+
+    // Get paginated tasks
+    const tasksResult = await pool.query(
+        `SELECT *
+         FROM tasks
+         WHERE project_id = $1
+         ORDER BY created_at DESC
+         LIMIT $2
+         OFFSET $3`,
+        [
+            projectId,
+            limit,
+            offset
+        ]
+    );
+
+    return tasksResult.rows;
 
 };
 
@@ -683,6 +691,226 @@ const changeTaskStatus = async (taskId, userId, status) => {
 
 };
 
+
+const searchTasks = async (projectId, userId, query) => {
+
+    // Check project exists
+    const projectResult = await pool.query(
+        `SELECT *
+         FROM projects
+         WHERE id = $1`,
+        [projectId]
+    );
+
+    const project = projectResult.rows[0];
+
+    if (!project) {
+        throw new Error("Project not found");
+    }
+
+    // Check project membership
+    const memberResult = await pool.query(
+        `SELECT *
+         FROM project_members
+         WHERE project_id = $1
+         AND user_id = $2`,
+        [
+            projectId,
+            userId
+        ]
+    );
+
+    const member = memberResult.rows[0];
+
+    if (!member) {
+        throw new Error("Access denied");
+    }
+
+    // Search tasks
+    const tasksResult = await pool.query(
+        `SELECT *
+         FROM tasks
+         WHERE project_id = $1
+         AND
+         (
+            title ILIKE $2
+            OR description ILIKE $2
+         )
+         ORDER BY created_at DESC`,
+        [
+            projectId,
+            `%${query}%`
+        ]
+    );
+
+    return tasksResult.rows;
+
+};
+
+
+
+const filterTasks = async (
+    projectId,
+    userId,
+    status,
+    priority
+) => {
+
+    // Check project exists
+    const projectResult = await pool.query(
+        `SELECT *
+         FROM projects
+         WHERE id = $1`,
+        [projectId]
+    );
+
+    const project = projectResult.rows[0];
+
+    if (!project) {
+        throw new Error("Project not found");
+    }
+
+    // Check project membership
+    const memberResult = await pool.query(
+        `SELECT *
+         FROM project_members
+         WHERE project_id = $1
+         AND user_id = $2`,
+        [
+            projectId,
+            userId
+        ]
+    );
+
+    const member = memberResult.rows[0];
+
+    if (!member) {
+        throw new Error("Access denied");
+    }
+
+    // Base query
+    let query = `
+        SELECT *
+        FROM tasks
+        WHERE project_id = $1
+    `;
+
+    let values = [projectId];
+
+    // Filter by status
+    if (status) {
+
+        query += ` AND status = $${values.length + 1}`;
+
+        values.push(status);
+
+    }
+
+    // Filter by priority
+    if (priority) {
+
+        query += ` AND priority = $${values.length + 1}`;
+
+        values.push(priority);
+
+    }
+
+    // Sort newest first
+    query += `
+        ORDER BY created_at DESC
+    `;
+
+    const tasksResult = await pool.query(
+        query,
+        values
+    );
+
+    return tasksResult.rows;
+
+};
+
+
+
+const sortTasks = async (
+    projectId,
+    userId,
+    sortBy,
+    order
+) => {
+
+    // Check project exists
+    const projectResult = await pool.query(
+        `SELECT *
+         FROM projects
+         WHERE id = $1`,
+        [projectId]
+    );
+
+    const project = projectResult.rows[0];
+
+    if (!project) {
+        throw new Error("Project not found");
+    }
+
+    // Check project membership
+    const memberResult = await pool.query(
+        `SELECT *
+         FROM project_members
+         WHERE project_id = $1
+         AND user_id = $2`,
+        [
+            projectId,
+            userId
+        ]
+    );
+
+    const member = memberResult.rows[0];
+
+    if (!member) {
+        throw new Error("Access denied");
+    }
+
+    // Allowed columns
+    const allowedSortFields = [
+        "title",
+        "priority",
+        "status",
+        "due_date",
+        "created_at"
+    ];
+
+    // Validate sortBy
+    if (!allowedSortFields.includes(sortBy)) {
+        sortBy = "created_at";
+    }
+
+    // Validate order
+    order = order?.toUpperCase();
+
+    if (order !== "ASC" && order !== "DESC") {
+        order = "DESC";
+    }
+
+    // Get sorted tasks
+    const tasksResult = await pool.query(
+        `
+        SELECT *
+        FROM tasks
+        WHERE project_id = $1
+        ORDER BY ${sortBy} ${order}
+        `,
+        [projectId]
+    );
+
+    return tasksResult.rows;
+
+};
+
+
+
+
+
+
 module.exports = {
-    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus
+    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus,searchTasks
 };
