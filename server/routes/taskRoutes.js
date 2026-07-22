@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const  protect  = require("../middleware/authMiddleware");
-const {createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus,filterTasks,searchTasks} = require("../controllers/taskController");
+const {createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus,filterTasks,searchTasks,sortTasks} = require("../controllers/taskController");
 
 // Create Task
 router.post(
@@ -66,7 +66,7 @@ router.get(
 router.get(
     "/project/:projectId/sort",
     protect,
-    taskController.sortTasks
+    sortTasks
 ); 
 
 module.exports = router;

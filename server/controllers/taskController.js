@@ -346,7 +346,10 @@ const sortTasks = async (req, res) => {
 
 
 
+
+
+
 module.exports
 ={
-    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus,searchTasks,filterTasks
+    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus,searchTasks,filterTasks,sortTasks
 }

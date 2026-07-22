@@ -10,9 +10,9 @@ const validator = require("validator");
 
 const getProfile = async (req, res) => {
     try {
-        const userId = req.user.userid; // Assuming the user ID is stored in req.user by the auth middleware
+        const userId = req.user.id; // Assuming the user ID is stored in req.user by the auth middleware
         
-        const user = await userModel.getuserbyid(userId);
+        const user = await userModel.getUserById(userId);
 
         if (!user) {
             return res.status(404).json({ message: "User not found",

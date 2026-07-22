@@ -1,5 +1,6 @@
 
 const projectModel = require('../models/projectModel');
+const activityModel = require("../models/activityModel");
 
 
 
@@ -260,6 +261,35 @@ const removeMember = async (req, res) => {
 
 
 
+const getProjectActivity = async (req, res) => {
+
+    try {
+
+        const { projectId } = req.params;
+
+        const userId = req.user.id;
+
+        const activities = await activityModel.getProjectActivity(
+            projectId,
+            userId
+        );
+
+        return res.status(200).json({
+            activities
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+
+};
+
 
 
 
@@ -269,5 +299,5 @@ module.exports
 =
 {
     createProject,getMyProjects,getProjectById,updateProject,deleteProject,
-    archiveProject,addMember,getProjectMembers,removeMember
+    archiveProject,addMember,getProjectMembers,removeMember,getProjectActivity
 }
