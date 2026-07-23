@@ -8,6 +8,7 @@ const commentRoutes = require('./routes/commentRoutes')
 const fileRoutes = require('./routes/fileRoutes')
 const adminRoutes = require("./routes/adminRoutes");
 const notificationRoutes = require("./routes/notificationRoutes")
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 
 
@@ -25,6 +26,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("api/notifications",notificationRoutes)
+app.use("/api/dashboard", dashboardRoutes);
 
 
 

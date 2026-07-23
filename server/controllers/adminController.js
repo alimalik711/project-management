@@ -217,5 +217,5 @@ const getDashboardStats = async (req, res) => {
 
 
 module.exports = {
-    getAllUsers,blockUser,unblockUser,deleteUser,getAllProjects,getAllTasks,,getDashboardStats
+    getAllUsers,blockUser,unblockUser,deleteUser,getAllProjects,getAllTasks,getDashboardStats
 };
