@@ -118,56 +118,48 @@ const getProjectTasks = async (
 
     const offset = (page - 1) * limit;
 
-    // Check project exists
-    const projectResult = await pool.query(
-        `SELECT *
-         FROM projects
-         WHERE id = $1`,
-        [projectId]
+    const tasksResult = await pool.query(
+        `SELECT
+            *
+         FROM tasks
+         JOIN project_members
+            ON tasks.project_id = project_members.project_id
+         WHERE
+            tasks.project_id = $1
+         AND
+            project_members.user_id = $2
+         LIMIT $3
+         OFFSET $4`,
+        [
+            projectId,
+            userId,
+            limit,
+            offset
+        ]
     );
 
-    const project = projectResult.rows[0];
-
-    if (!project) {
-        throw new Error("Project not found");
-    }
-
-    // Check project membership
-    const memberResult = await pool.query(
-        `SELECT *
-         FROM project_members
-         WHERE project_id = $1
-         AND user_id = $2`,
+    const countResult = await pool.query(
+        `SELECT COUNT(*) AS total_items
+         FROM tasks
+         JOIN project_members
+            ON tasks.project_id = project_members.project_id
+         WHERE
+            tasks.project_id = $1
+         AND
+            project_members.user_id = $2`,
         [
             projectId,
             userId
         ]
     );
 
-    const member = memberResult.rows[0];
-
-    if (!member) {
-        throw new Error("Access denied");
-    }
-
-    // Get paginated tasks
-    const tasksResult = await pool.query(
-        `SELECT *
-         FROM tasks
-         WHERE project_id = $1
-         ORDER BY created_at DESC
-         LIMIT $2
-         OFFSET $3`,
-        [
-            projectId,
-            limit,
-            offset
-        ]
-    );
-
-    return tasksResult.rows;
+    return {
+        tasks: tasksResult.rows,
+        totalItems: Number(countResult.rows[0].total_items)
+    };
 
 };
+
 
 
 const getTaskById = async (taskId, userId) => {

@@ -52,19 +52,32 @@ const getProjectTasks = async (req, res) => {
 
         const { projectId } = req.params;
 
-        const { page = 1, limit = 10 } = req.query;
+        const {
+            page = 1,
+            limit = 10
+        } = req.query;
 
-        const userId = req.user.id;
+        const userId = req.user.userid;
 
-        const tasks = await taskModel.getProjectTasks(
+        const result = await taskModel.getProjectTasks(
             projectId,
             userId,
             Number(page),
             Number(limit)
         );
 
+        const totalPages = Math.ceil(
+            result.totalItems / Number(limit)
+        );
+
         return res.status(200).json({
-            tasks
+            tasks: result.tasks,
+            pagination: {
+                page: Number(page),
+                limit: Number(limit),
+                totalItems: result.totalItems,
+                totalPages
+            }
         });
 
     } catch (error) {
@@ -78,7 +91,6 @@ const getProjectTasks = async (req, res) => {
     }
 
 };
-
 
 
 const getTaskById = async (req, res) => {

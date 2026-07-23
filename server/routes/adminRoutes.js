@@ -55,4 +55,12 @@ router.get(
 );
 
 
+router.get(
+    "/stats",
+    protect,
+    adminOnly,
+    adminController.getDashboardStats
+);
+
+
 module.exports = router;
