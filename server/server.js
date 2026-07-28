@@ -9,6 +9,8 @@ const fileRoutes = require('./routes/fileRoutes')
 const adminRoutes = require("./routes/adminRoutes");
 const notificationRoutes = require("./routes/notificationRoutes")
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const cookieParser = require("cookie-parser");
+
 
 
 
@@ -22,6 +24,7 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(cookieParser());
 
 
 app.use(express.json());
@@ -34,6 +37,7 @@ app.use("/api/files", fileRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("api/notifications",notificationRoutes)
 app.use("/api/dashboard", dashboardRoutes);
+
 
 
 

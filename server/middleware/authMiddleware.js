@@ -1,79 +1,47 @@
-const jwt = require('jsonwebtoken')
-require('dotenv').config()
+const jwt = require("jsonwebtoken");
+const userModel = require("../models/userModel");
 
+const protect = async (req, res, next) => {
+    try {
+        const token = req.cookies.token;
 
-const protect = async (req,res,next)=>{
-
-    try{
-
-        const authHeader = req.headers.authorization
-
-        if(!authHeader || !authHeader.startsWith("Bearer"))
-        {
-
+        if (!token) {
             return res.status(401).json({
-                message : "no token found"
-            })
-        }
-
-        const token = authHeader.split(" ")[1]
-
-
-        const decoded = jwt.verify(token,process.env.JWT_SECRET)
-
-        
-
-        
-
-        const user = await userModel.getuserbyid(decoded.userid)
-
-        if(!user)
-        {
-
-            return res.status(401).json({
-                message : "user doesnt exists"
-
-            })
-            
-        }
-
-            if (user.is_blocked) {
-            return res.status(403).json({
-                message: "Blocked by admin",
+                message: "Not authenticated"
             });
         }
 
-        req.user = user; // Attach the user object to the request for further use
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET
+        );
+
+        const user = await userModel.getUserById(
+            decoded.userid
+        );
+
+        if (!user) {
+            return res.status(401).json({
+                message: "User not found"
+            });
+        }
+
+        if (user.is_blocked) {
+            return res.status(403).json({
+                message: "Blocked by admin"
+            });
+        }
+
+        req.user = user;
 
         next();
 
-
-
-    }
-    catch(error){
-
-         console.error(error.message);
-
+    } catch (error) {
         return res.status(401).json({
             message: "Invalid or expired token"
         });
-         console.log("error in middleware")
     }
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
-
-module.exports= protect
+module.exports = 
+    protect
