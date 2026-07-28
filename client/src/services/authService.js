@@ -12,7 +12,7 @@ export const signup = async (formData) => {
 
 export const logout = async () => {
     const response = await api.post("/auth/logout");
-    return response.data;
+    return response.data; 
 };
 
 export const getProfile = async () => {

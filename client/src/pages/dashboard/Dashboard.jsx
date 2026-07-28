@@ -5,14 +5,23 @@ import StatsCard from "../../components/common/StatsCard";
 function Dashboard() {
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
+                setError("");
+
                 const data = await getDashboard();
+
                 setDashboard(data);
             } catch (error) {
                 console.error(error);
+
+                setError(
+                    error.response?.data?.message ||
+                    "Failed to load dashboard"
+                );
             } finally {
                 setLoading(false);
             }
@@ -24,7 +33,27 @@ function Dashboard() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
-                <h2 className="text-2xl font-semibold">Loading...</h2>
+                <h2 className="text-2xl font-semibold">
+                    Loading...
+                </h2>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8">
+                <p className="text-red-600 font-medium">
+                    {error}
+                </p>
+            </div>
+        );
+    }
+
+    if (!dashboard) {
+        return (
+            <div className="p-8">
+                <p>No dashboard data available.</p>
             </div>
         );
     }
@@ -58,7 +87,6 @@ function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gray-100 p-8">
-
             <div className="mb-8">
                 <h1 className="text-4xl font-bold text-gray-800">
                     Dashboard
@@ -70,7 +98,6 @@ function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-
                 {stats.map((stat) => (
                     <StatsCard
                         key={stat.title}
@@ -78,9 +105,7 @@ function Dashboard() {
                         value={stat.value}
                     />
                 ))}
-
             </div>
-
         </div>
     );
 }
