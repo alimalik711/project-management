@@ -37,10 +37,11 @@ const getMyProjects = async (req, res) => {
         
 
         const userid= req.user.id;
+       
         
-        const project = await projectModel.getMyProjects(userid);
+        const projects = await projectModel.getMyProjects(userid);
 
-        return res.status(200).json({ message: "Project fetched successfuly", project });
+        return res.status(200).json({ message: "Project fetched successfuly", projects });
     }
 
     catch (error) {

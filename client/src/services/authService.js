@@ -20,12 +20,38 @@ export const getProfile = async () => {
     return response.data;
 };
 
+
+
 export const updateProfile = async (formData) => {
-    const response = await api.put("/users/profile", formData);
+    const response = await api.patch(
+        "/users/profile",
+        formData
+    );
+
     return response.data;
 };
 
+
 export const changePassword = async (formData) => {
-    const response = await api.put("/users/change-password", formData);
+    const response = await api.patch(
+        "/users/change-password",
+        formData
+    );
+
+    return response.data;
+};
+
+
+export const uploadAvatar = async (formData) => {
+    const response = await api.patch(
+        "/users/avatar",
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        }
+    );
+
     return response.data;
 };

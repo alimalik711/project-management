@@ -7,7 +7,9 @@ import {
 import {
     login,
     logout,
-    getProfile
+    getProfile,
+    updateProfile,
+    uploadAvatar
 } from "../services/authService";
 
 export const AuthContext = createContext();
@@ -53,13 +55,36 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
+    const updateUserProfile = async (formData) => {
+    await updateProfile(formData);
+
+    const data = await getProfile();
+
+    setUser(data.user ?? data);
+};
+
+
+    const updateUserAvatar = async (file) => {
+    const formData = new FormData();
+
+    formData.append("avatar", file);
+
+    await uploadAvatar(formData);
+
+    const data = await getProfile();
+
+    setUser(data.user ?? data);
+};
+
     return (
         <AuthContext.Provider
             value={{
                 user,
                 loading,
                 loginUser,
-                logoutUser
+                logoutUser,
+                updateUserProfile,
+                updateUserAvatar
             }}
         >
             {children}

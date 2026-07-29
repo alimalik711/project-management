@@ -4,6 +4,9 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
 const validator = require("validator");
+const fs = require("fs");
+const path = require("path");
+
 
 
 
@@ -133,12 +136,121 @@ const changePassword = async (req, res) => {
 };
 
 
+const updateAvatar = async (req, res) => {
+    let uploadedFilePath = null;
 
+    try {
+        const userId = req.user.id;
 
+        if (!req.file) {
+            return res.status(400).json({
+                message: "Please select an image"
+            });
+        }
 
+        uploadedFilePath = req.file.path;
+
+        const currentUser =
+            await userModel.getAvatarByUserId(userId);
+
+        if (!currentUser) {
+            if (fs.existsSync(uploadedFilePath)) {
+                fs.unlinkSync(uploadedFilePath);
+            }
+
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        /*
+         req.file.path on Windows may look like:
+
+         C:\project\server\uploads\avatars\image.png
+
+         We only want to store:
+
+         uploads/avatars/image.png
+        */
+
+        const avatarPath = path
+            .relative(
+                path.join(__dirname, ".."),
+                req.file.path
+            )
+            .replace(/\\/g, "/");
+
+        const updatedUser =
+            await userModel.updateUserAvatar(
+                userId,
+                avatarPath
+            );
+
+        /*
+         Delete the old avatar only after the
+         database was successfully updated.
+        */
+
+        if (currentUser.avatar) {
+            const oldAvatarPath = path.join(
+                __dirname,
+                "..",
+                currentUser.avatar
+            );
+
+            if (fs.existsSync(oldAvatarPath)) {
+                fs.unlinkSync(oldAvatarPath);
+            }
+        }
+
+        return res.status(200).json({
+            message: "Avatar updated successfully",
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error(
+            "Update avatar error:",
+            error
+        );
+
+        /*
+         If the new image was uploaded but the
+         database operation failed, delete it.
+        */
+
+        if (
+            uploadedFilePath &&
+            fs.existsSync(uploadedFilePath)
+        ) {
+            fs.unlinkSync(uploadedFilePath);
+        }
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+    }
+};
+
+const getAvatar = async (req, res) => {
+    try {
+        const user = await userModel.getAvatarByUserId(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({ avatar: user.avatar });
+    } catch (error) {
+        console.error("Get avatar error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
 
 module.exports = {
     getProfile,
     updateProfile,
-    changePassword
+    changePassword,
+    updateAvatar,
+    getAvatar
 };

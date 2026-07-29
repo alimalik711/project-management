@@ -59,27 +59,22 @@ try {
 
 
 const getMyProjects = async (userId) => {
-
-    try{
+  try {
     const result = await pool.query(
-        `SELECT p.*
-         FROM projects p
-         JOIN project_members pm
+      `SELECT p.*
+       FROM projects p
+       JOIN project_members pm
          ON p.id = pm.project_id
-         WHERE pm.user_id = $1
-         ORDER BY p.created_at DESC`,
-        [userId]
+       WHERE pm.user_id = $1
+       ORDER BY p.created_at DESC`,
+      [userId]
     );
-    }
-    catch(error)
-    {
 
-         throw error;
-
-    }
     return result.rows;
+  } catch (error) {
+    throw error;
+  }
 };
-
 
 
 const getProjectById = async (projectId, userId) => {

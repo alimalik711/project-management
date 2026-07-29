@@ -102,10 +102,55 @@ const changeUserPassword = async (
 
 };
 
+
+
+const getAvatarByUserId = async (userId) => {
+    const result = await pool.query(
+        `
+        SELECT avatar
+        FROM users
+        WHERE id = $1
+        `,
+        [userId]
+    );
+
+    return result.rows[0];
+};
+
+const updateUserAvatar = async (
+    userId,
+    avatarPath
+) => {
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET
+            avatar = $1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING
+            id,
+            name,
+            email,
+            role,
+            avatar,
+            created_at,
+            updated_at
+        `,
+        [avatarPath, userId]
+    );
+
+    return result.rows[0];
+};
+
+
+
 module.exports = {
     getUserByEmail,
     createUser,
     getUserById,
     updateUserProfile,
-    changeUserPassword
+    changeUserPassword,
+    getAvatarByUserId,
+    updateUserAvatar
 };
