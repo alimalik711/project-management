@@ -4,7 +4,7 @@ const pool = require('../config/db');
 
 
 
-const createProject = async (req,res)=>
+const createProject = async (name, description, deadline, ownerId)=>
 
 {
 
