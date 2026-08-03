@@ -7,7 +7,7 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Projects from "./pages/project/Projects";
-// import ProjectDetails from "./pages/project/ProjectDetails";
+import ProjectDetails from "./pages/project/ProjectDetails";
 // import Tasks from "./pages/task/Tasks";
 import Profile from "./pages/profile/Profile";
 // import Notifications from "./pages/notification/Notifications";
@@ -32,8 +32,8 @@ function App() {
             >
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects" element={<Projects />} />
-                {/* <Route path="/projects/:id" element={<ProjectDetails />} />
-                <Route path="/tasks" element={<Tasks />} /> */}
+                <Route path="/projects/:id" element={<ProjectDetails />} />
+                {/* <Route path="/tasks" element={<Tasks />} /> */}
                 <Route path="/profile" element={<Profile />} /> */
                 {/* <Route path="/notifications" element={<Notifications />} /> */}
                 {/* <Route

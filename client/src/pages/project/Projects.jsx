@@ -1,48 +1,49 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getMyProjects } from "../../services/projectService";
+import CreateProjectForm from "../../components/project/CreateProjectForm";
 
 function Projects() {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        const fetchProjects = async () => {
-            try {
-                setLoading(true);
-                setError("");
+    const [showCreateForm, setShowCreateForm] =
+        useState(false);
 
-                const data = await getMyProjects();
+    const fetchProjects = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError("");
 
-                setProjects(data.projects ?? data);
-            } catch (error) {
-                setError(
-                    error.response?.data?.message ||
-                    "Failed to load projects"
+            const data = await getMyProjects();
+
+            if (!Array.isArray(data.projects)) {
+                throw new Error(
+                    "Projects response is not an array"
                 );
-            } finally {
-                setLoading(false);
             }
-        };
 
-        fetchProjects();
+            setProjects(data.projects);
+        } catch (error) {
+            setError(
+                error.response?.data?.message ||
+                    error.message ||
+                    "Failed to load projects"
+            );
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
     if (loading) {
         return (
             <div className="p-8">
                 <p>Loading projects...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="p-8">
-                <p className="text-red-600">
-                    {error}
-                </p>
             </div>
         );
     }
@@ -62,11 +63,18 @@ function Projects() {
 
                 <button
                     type="button"
+                    onClick={() => setShowCreateForm(true)}
                     className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
                 >
                     Create Project
                 </button>
             </div>
+
+            {error && (
+                <p className="mb-6 rounded-lg bg-red-100 px-4 py-3 text-red-700">
+                    {error}
+                </p>
+            )}
 
             {projects.length === 0 ? (
                 <div className="rounded-xl bg-white p-8 text-center shadow">
@@ -109,13 +117,23 @@ function Projects() {
 
                                 {project.role && (
                                     <p className="mt-2">
-                                        Your role: {project.role}
+                                        Your role:{" "}
+                                        {project.role}
                                     </p>
                                 )}
                             </div>
                         </Link>
                     ))}
                 </div>
+            )}
+
+            {showCreateForm && (
+                <CreateProjectForm
+                    onClose={() =>
+                        setShowCreateForm(false)
+                    }
+                    onProjectCreated={fetchProjects}
+                />
             )}
         </div>
     );
