@@ -12,6 +12,7 @@ const createTask = async (req, res) => {
             priority,
             due_date
         } = req.body;
+        console.log("PROJECT ID:", req.params.projectId);
 
         const userId = req.user.id;
 
@@ -57,7 +58,10 @@ const getProjectTasks = async (req, res) => {
             limit = 10
         } = req.query;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
+
+        console.log("PROJECT ID:", projectId);
+console.log("USER ID:", userId);
 
         const result = await taskModel.getProjectTasks(
             projectId,
@@ -98,7 +102,7 @@ const getTaskById = async (req, res) => {
     try {
 
         const { taskId } = req.params;
-        const userId = req.user.userid; // or req.user.id
+        const userId = req.user.id; // or req.user.id
 
         const task = await taskModel.getTaskById(
             taskId,

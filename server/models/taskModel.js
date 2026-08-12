@@ -92,7 +92,7 @@ const createTask = async (
         );
 
         await client.query("COMMIT");
-
+        console.log("TASKS FROM DB:", task);
         return task;
 
     } catch (error) {

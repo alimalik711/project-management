@@ -1,35 +1,33 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import {
+    Link,
+    useNavigate,
+    useParams,
+} from "react-router-dom";
 
 import {
     archiveProject,
+    deleteProject,
     getProjectById,
 } from "../../services/projectService";
 
-import ProjectMembers from "../../components/project/ProjectMembers";
-import ProjectActivity from "../../components/project/ProjectActivity";
-import EditProjectForm from "../../components/project/EditProjectForm";
+import ProjectMembers from "./ProjectMembers";
+import ProjectActivity from "./ProjectActivity";
+import EditProjectForm from "./EditProjectForm";
+import ProjectTasks from "../../components/task/ProjectTasks";
 
 function ProjectDetails() {
-    /*
-        Your React route is:
-
-        /projects/:id
-
-        For the URL /projects/7:
-
-        useParams() returns:
-        {
-            id: "7"
-        }
-    */
     const { id } = useParams();
     const projectId = id;
+
+    const navigate = useNavigate();
 
     const [project, setProject] = useState(null);
 
     const [loading, setLoading] = useState(true);
     const [archiving, setArchiving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
     const [showEditForm, setShowEditForm] =
         useState(false);
 
@@ -78,11 +76,6 @@ function ProjectDetails() {
             const data =
                 await archiveProject(projectId);
 
-            /*
-                Keep existing frontend properties such
-                as project.role even if the archive
-                endpoint does not return them.
-            */
             setProject((previousProject) => ({
                 ...previousProject,
                 ...(data.project ?? {}),
@@ -104,16 +97,36 @@ function ProjectDetails() {
         }
     };
 
+    const handleDeleteProject = async () => {
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this project?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            setDeleting(true);
+            setError("");
+            setSuccess("");
+
+            await deleteProject(projectId);
+
+            navigate("/projects");
+        } catch (error) {
+            setError(
+                error.response?.data?.message ||
+                    "Failed to delete project"
+            );
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     const handleProjectUpdated = (
         updatedProject
     ) => {
-        /*
-            Merge the updated fields into the old
-            project instead of replacing everything.
-
-            This preserves properties such as role
-            if the update endpoint does not return them.
-        */
         setProject((previousProject) => ({
             ...previousProject,
             ...updatedProject,
@@ -135,10 +148,6 @@ function ProjectDetails() {
         );
     }
 
-    /*
-        This handles an error that happened before
-        any project was successfully loaded.
-    */
     if (error && !project) {
         return (
             <div className="p-8">
@@ -218,34 +227,53 @@ function ProjectDetails() {
                             {project.status}
                         </span>
 
-                        {isOwner && !isArchived && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setError("");
-                                    setSuccess("");
-                                    setShowEditForm(
-                                        true
-                                    );
-                                }}
-                                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                            >
-                                Edit Project
-                            </button>
-                        )}
+                        {isOwner &&
+                            !isArchived && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setError("");
+                                        setSuccess("");
+                                        setShowEditForm(
+                                            true
+                                        );
+                                    }}
+                                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                                >
+                                    Edit Project
+                                </button>
+                            )}
 
-                        {isOwner && !isArchived && (
+                        {isOwner &&
+                            !isArchived && (
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleArchiveProject
+                                    }
+                                    disabled={
+                                        archiving
+                                    }
+                                    className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {archiving
+                                        ? "Archiving..."
+                                        : "Archive Project"}
+                                </button>
+                            )}
+
+                        {isOwner && (
                             <button
                                 type="button"
                                 onClick={
-                                    handleArchiveProject
+                                    handleDeleteProject
                                 }
-                                disabled={archiving}
-                                className="rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={deleting}
+                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {archiving
-                                    ? "Archiving..."
-                                    : "Archive Project"}
+                                {deleting
+                                    ? "Deleting..."
+                                    : "Delete Project"}
                             </button>
                         )}
                     </div>
@@ -292,6 +320,10 @@ function ProjectDetails() {
                     </div>
                 </div>
             </div>
+
+            <div className="mt-8">
+    <ProjectTasks projectId={projectId} />
+</div>
 
             <div className="mt-8">
                 <ProjectMembers

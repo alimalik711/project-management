@@ -66,8 +66,9 @@ const getProjectById = async (req, res) => {
                 message: "Project not found",
             });
         }
-
+        
         return res.status(200).json({
+            
             project,
         });
     } catch (error) {
@@ -83,7 +84,7 @@ const getProjectById = async (req, res) => {
 const updateProject = async (req, res) => {
     try {
         const { projectId } = req.params;
-        const { name, description, deadline, status } = req.body;
+        const { name, description, deadline } = req.body;
 
         if (!name) {
             return res.status(400).json({
@@ -99,7 +100,7 @@ const updateProject = async (req, res) => {
             name,
             description,
             deadline,
-            status
+           
         );
 
         if (!project) {

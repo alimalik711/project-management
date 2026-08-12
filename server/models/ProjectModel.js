@@ -80,7 +80,7 @@ const getMyProjects = async (userId) => {
 const getProjectById = async (projectId, userId) => {
     try {
         const result = await pool.query(
-            `SELECT p.*
+            `SELECT p.*, pm.role
              FROM projects p
              JOIN project_members pm
              ON p.id = pm.project_id
@@ -109,12 +109,12 @@ const updateProject = async (
              SET name = $1,
                  description = $2,
                  deadline = $3,
-                 status = $4,
+                
                  updated_at = NOW()
-             WHERE id = $5
-             AND owner_id = $6
+             WHERE id = $4
+             AND owner_id = $5
              RETURNING *`,
-            [name, description, deadline, status, projectId, userId]
+            [name, description, deadline, projectId, userId]
         );
 
         return result.rows[0];
@@ -382,9 +382,26 @@ const removeMember = async (projectId, ownerId, userId) => {
     } finally {
         client.release();
     }
+
+
+
+};
+
+
+const deleteProject = async (projectId) => {
+    const result = await pool.query(
+        `
+        DELETE FROM projects
+        WHERE id = $1
+        RETURNING *
+        `,
+        [projectId]
+    );
+
+    return result.rows[0];
 };
 
 
 module.exports = {
-    createProject, getMyProjects,getProjectById,updateProject,archiveProject,addMember,getProjectMembers
+    createProject, getMyProjects,getProjectById,updateProject,archiveProject,addMember,getProjectMembers,deleteProject
 };
