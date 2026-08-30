@@ -191,7 +191,7 @@ const assignTask = async (req, res) => {
     try {
 
         const { taskId } = req.params;
-        const { userId } = req.body;
+        const {userId}  = req.body;
 
         const requesterId = req.user.id; // or req.user.id
 
@@ -258,14 +258,14 @@ const searchTasks = async (req, res) => {
 
         const { projectId } = req.params;
 
-        const { query } = req.query;
+        const searchQuery = req.query.query || req.query.search || "";
 
         const userId = req.user.id;
 
         const tasks = await taskModel.searchTasks(
             projectId,
             userId,
-            query
+            searchQuery
         );
 
         return res.status(200).json({

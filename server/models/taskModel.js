@@ -199,6 +199,16 @@ const getTaskById = async (taskId, userId) => {
             throw new Error("Access denied");
         }
 
+        const assigneesResult = await pool.query(
+            `SELECT u.id, u.name, u.email, u.avatar
+             FROM task_assignees ta
+             JOIN users u ON ta.user_id = u.id
+             WHERE ta.task_id = $1`,
+            [taskId]
+        );
+
+        task.assigned_users = assigneesResult.rows;
+
         return task;
 
     } catch (error) {
@@ -325,14 +335,12 @@ const updateTask = async (taskId, userId, data) => {
 
 
 const deleteTask = async (taskId, userId) => {
-
     const client = await pool.connect();
 
     try {
-
         await client.query("BEGIN");
 
-        // Check task exists
+        // 1. Check task exists
         const taskResult = await client.query(
             `SELECT *
              FROM tasks
@@ -346,7 +354,7 @@ const deleteTask = async (taskId, userId) => {
             throw new Error("Task not found");
         }
 
-        // Check user is a project member
+        // 2. Check user belongs to the project
         const memberResult = await client.query(
             `SELECT *
              FROM project_members
@@ -361,14 +369,7 @@ const deleteTask = async (taskId, userId) => {
             throw new Error("Access denied");
         }
 
-        // Delete task
-        await client.query(
-            `DELETE FROM tasks
-             WHERE id = $1`,
-            [taskId]
-        );
-
-        // Create activity log
+        // 3. Create activity log BEFORE deleting task
         await client.query(
             `INSERT INTO activity_logs
             (
@@ -381,26 +382,45 @@ const deleteTask = async (taskId, userId) => {
             VALUES ($1, $2, $3, $4, $5)`,
             [
                 userId,
-                "TASK_UPDATED",
+                "TASK_DELETED",
                 `Task "${task.title}" was deleted`,
                 task.project_id,
                 task.id
             ]
         );
 
+        // 4. Delete task
+        await client.query(
+            `DELETE FROM tasks
+             WHERE id = $1`,
+            [taskId]
+        );
+
+        /*
+            Because activity_logs.task_id uses:
+
+            ON DELETE SET NULL
+
+            PostgreSQL automatically changes:
+
+            task_id = task.id
+                   ↓
+            task_id = NULL
+
+            The activity log stays.
+        */
+
         await client.query("COMMIT");
 
-    } catch (error) {
+        return task;
 
+    } catch (error) {
         await client.query("ROLLBACK");
         throw error;
 
     } finally {
-
         client.release();
-
     }
-
 };
 
 
@@ -630,14 +650,18 @@ const changeTaskStatus = async (taskId, userId, status) => {
                     `INSERT INTO notifications
                     (
                         user_id,
+                        type,
                         message,
-                        task_id
+                        task_id,
+                        project_id
                     )
-                    VALUES ($1, $2, $3)`,
+                    VALUES ($1, $2, $3, $4, $5)`,
                     [
                         assignee.user_id,
+                        status === "COMPLETED" ? "TASK_COMPLETED" : "TASK_ASSIGNED",
                         `Task "${task.title}" status changed to "${status}".`,
-                        task.id
+                        task.id,
+                        task.project_id
                     ]
                 );
 
@@ -646,6 +670,7 @@ const changeTaskStatus = async (taskId, userId, status) => {
         }
 
         // Activity Log
+        const actionType = status === "COMPLETED" ? "TASK_COMPLETED" : "TASK_UPDATED";
         await client.query(
             `INSERT INTO activity_logs
             (
@@ -658,7 +683,7 @@ const changeTaskStatus = async (taskId, userId, status) => {
             VALUES ($1, $2, $3, $4, $5)`,
             [
                 userId,
-                "TASK_STATUS_CHANGED",
+                actionType,
                 `Changed task "${task.title}" status to "${status}"`,
                 task.project_id,
                 task.id
@@ -904,5 +929,5 @@ const sortTasks = async (
 
 
 module.exports = {
-    createTask,getProjectTasks,getTaskById,updateTask,deleteTask,assignTask,changeTaskStatus,searchTasks
+    createTask, getProjectTasks, getTaskById, updateTask, deleteTask, assignTask, changeTaskStatus, searchTasks, filterTasks, sortTasks
 };

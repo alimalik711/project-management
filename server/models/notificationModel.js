@@ -41,10 +41,22 @@ const markAsRead = async (
     }
 
     return notification;
+};
 
+const markAllAsRead = async (userId) => {
+    const result = await pool.query(
+        `UPDATE notifications
+         SET is_read = TRUE
+         WHERE user_id = $1
+         RETURNING *`,
+        [userId]
+    );
+
+    return result.rows;
 };
 
 module.exports = {
-
-    getMyNotifications , markAsRead
-}
+    getMyNotifications,
+    markAsRead,
+    markAllAsRead
+};

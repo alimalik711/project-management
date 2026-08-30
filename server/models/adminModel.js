@@ -1,5 +1,4 @@
-const pool = require('../config/db')
-
+const pool = require('../config/db');
 
 const getAllUsers = async (
     page,
@@ -8,7 +7,6 @@ const getAllUsers = async (
     sortBy,
     order
 ) => {
-
     const offset = (page - 1) * limit;
 
     const allowedSortFields = [
@@ -22,7 +20,7 @@ const getAllUsers = async (
         sortBy = "created_at";
     }
 
-    order = order.toUpperCase();
+    order = order ? order.toUpperCase() : "DESC";
 
     if (order !== "ASC" && order !== "DESC") {
         order = "DESC";
@@ -51,13 +49,9 @@ const getAllUsers = async (
     );
 
     return usersResult.rows;
-
 };
 
-
-
 const blockUser = async (userId) => {
-
     const result = await pool.query(
         `UPDATE users
          SET is_blocked = TRUE
@@ -79,12 +73,9 @@ const blockUser = async (userId) => {
     }
 
     return user;
-
 };
 
-
 const unblockUser = async (userId) => {
-
     const result = await pool.query(
         `UPDATE users
          SET is_blocked = FALSE
@@ -106,12 +97,9 @@ const unblockUser = async (userId) => {
     }
 
     return user;
-
 };
 
-
 const deleteUser = async (userId) => {
-
     const userResult = await pool.query(
         `SELECT *
          FROM users
@@ -125,7 +113,6 @@ const deleteUser = async (userId) => {
         throw new Error("User not found");
     }
 
-
     const projectResult = await pool.query(
         `SELECT id
          FROM projects
@@ -133,13 +120,11 @@ const deleteUser = async (userId) => {
         [userId]
     );
 
-
     if (projectResult.rows.length > 0) {
         throw new Error(
             "Cannot delete user who owns projects"
         );
     }
-
 
     const deletedUser = await pool.query(
         `DELETE FROM users
@@ -152,13 +137,8 @@ const deleteUser = async (userId) => {
         [userId]
     );
 
-
     return deletedUser.rows[0];
-
 };
-
-
-
 
 const getAllProjects = async (
     page,
@@ -167,11 +147,10 @@ const getAllProjects = async (
     sortBy,
     order
 ) => {
-
     const offset = (page - 1) * limit;
 
     const allowedSortFields = [
-        "title",
+        "name",
         "status",
         "created_at"
     ];
@@ -180,7 +159,7 @@ const getAllProjects = async (
         sortBy = "created_at";
     }
 
-    order = order.toUpperCase();
+    order = order ? order.toUpperCase() : "DESC";
 
     if (order !== "ASC" && order !== "DESC") {
         order = "DESC";
@@ -189,7 +168,7 @@ const getAllProjects = async (
     const result = await pool.query(
         `SELECT
             projects.id,
-            projects.title,
+            projects.name,
             projects.description,
             projects.status,
             projects.created_at,
@@ -200,7 +179,7 @@ const getAllProjects = async (
          JOIN users
             ON projects.owner_id = users.id
          WHERE
-            projects.title ILIKE $1
+            projects.name ILIKE $1
             OR users.name ILIKE $1
          ORDER BY ${sortBy} ${order}
          LIMIT $2
@@ -213,21 +192,76 @@ const getAllProjects = async (
     );
 
     return result.rows;
-
 };
 
+const getAllTasks = async (
+    page,
+    limit,
+    search,
+    sortBy,
+    order
+) => {
+    const offset = (page - 1) * limit;
 
+    const allowedSortFields = ["title", "status", "priority", "created_at"];
 
+    if (!allowedSortFields.includes(sortBy)) {
+        sortBy = "created_at";
+    }
+
+    order = order ? order.toUpperCase() : "DESC";
+
+    if (order !== "ASC" && order !== "DESC") {
+        order = "DESC";
+    }
+
+    const result = await pool.query(
+        `SELECT
+            tasks.id,
+            tasks.title,
+            tasks.description,
+            tasks.status,
+            tasks.priority,
+            tasks.created_at,
+            projects.name AS project_name,
+            users.name AS creator_name
+         FROM tasks
+         JOIN projects ON tasks.project_id = projects.id
+         JOIN users ON tasks.created_by = users.id
+         WHERE tasks.title ILIKE $1
+            OR projects.name ILIKE $1
+            OR users.name ILIKE $1
+         ORDER BY ${sortBy} ${order}
+         LIMIT $2
+         OFFSET $3`,
+        [
+            `%${search}%`,
+            limit,
+            offset
+        ]
+    );
+
+    return result.rows;
+};
+
+const getDashboardStats = async () => {
+    const result = await pool.query(`
+        SELECT
+            (SELECT COUNT(*)::INT FROM users) AS total_users,
+            (SELECT COUNT(*)::INT FROM projects) AS total_projects,
+            (SELECT COUNT(*)::INT FROM tasks) AS total_tasks,
+            (SELECT COUNT(*)::INT FROM users WHERE is_blocked = TRUE) AS blocked_users
+    `);
+
+    return result.rows[0];
+};
 
 module.exports = {
     getAllUsers,
     blockUser,
     unblockUser,
     deleteUser,
-    getAllProjects
+    getAllProjects,
+    getAllTasks,
+    getDashboardStats
 };
-
-
-
-
-

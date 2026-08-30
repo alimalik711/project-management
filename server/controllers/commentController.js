@@ -7,7 +7,7 @@ const createComment = async (req, res) => {
         const { taskId } = req.params;
         const { content } = req.body;
 
-        const userId = req.user.userid; // or req.user.id
+        const userId = req.user.id;
 
         const comment = await commentModel.createComment(
             taskId,
@@ -39,7 +39,7 @@ const getTaskComments = async (req, res) => {
 
         const { taskId } = req.params;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const comments = await commentModel.getTaskComments(
             taskId,
@@ -69,7 +69,7 @@ const updateComment = async (req, res) => {
         const { commentId } = req.params;
         const { content } = req.body;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const comment = await commentModel.updateComment(
             commentId,
@@ -101,7 +101,7 @@ const deleteComment = async (req, res) => {
 
         const { commentId } = req.params;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         await commentModel.deleteComment(
             commentId,

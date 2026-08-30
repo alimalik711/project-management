@@ -4,7 +4,7 @@ const getMyNotifications = async (req, res) => {
 
     try {
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const notifications = await notificationModel.getMyNotifications(
             userId
@@ -34,7 +34,7 @@ const markAsRead = async (req, res) => {
 
         const { notificationId } = req.params;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const notification = await notificationModel.markAsRead(
             notificationId,
@@ -64,7 +64,7 @@ const markAllAsRead = async (req, res) => {
 
     try {
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const notifications = await notificationModel.markAllAsRead(userId);
 

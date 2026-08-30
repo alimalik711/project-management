@@ -256,3 +256,9 @@ const deleteFile = async (fileId, userId) => {
     }
 
 };
+
+module.exports = {
+    uploadFile,
+    getTaskFiles,
+    deleteFile
+};

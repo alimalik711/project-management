@@ -388,14 +388,15 @@ const removeMember = async (projectId, ownerId, userId) => {
 };
 
 
-const deleteProject = async (projectId) => {
+const deleteProject = async (projectId, userId) => {
     const result = await pool.query(
         `
         DELETE FROM projects
         WHERE id = $1
+        AND owner_id = $2
         RETURNING *
         `,
-        [projectId]
+        [projectId, userId]
     );
 
     return result.rows[0];
@@ -403,5 +404,5 @@ const deleteProject = async (projectId) => {
 
 
 module.exports = {
-    createProject, getMyProjects,getProjectById,updateProject,archiveProject,addMember,getProjectMembers,deleteProject
+    createProject, getMyProjects, getProjectById, updateProject, archiveProject, addMember, getProjectMembers, removeMember, deleteProject
 };

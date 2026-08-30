@@ -358,4 +358,4 @@ const deleteComment = async (commentId, userId) => {
 };
 
 
-module.exports = {createComment,getTaskComments,updateComment}
+module.exports = { createComment, getTaskComments, updateComment, deleteComment };

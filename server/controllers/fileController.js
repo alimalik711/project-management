@@ -1,13 +1,15 @@
 
 
 
+const fileModel = require("../models/fileModel");
+
 const uploadFile = async (req, res) => {
 
     try {
 
         const { taskId } = req.params;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const file = req.file;
 
@@ -42,7 +44,7 @@ const getTaskFiles = async (req, res) => {
 
         const { taskId } = req.params;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         const files = await fileModel.getTaskFiles(
             taskId,
@@ -72,7 +74,7 @@ const deleteFile = async (req, res) => {
 
         const { fileId } = req.params;
 
-        const userId = req.user.userid;
+        const userId = req.user.id;
 
         await fileModel.deleteFile(
             fileId,
